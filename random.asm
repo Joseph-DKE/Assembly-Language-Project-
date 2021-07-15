@@ -13,8 +13,7 @@ section .data
 	stdin equ 0
 	outofchances db 'You are out of chances', 10, 13
 	lenoutofchances equ $-outofchances
-	generatedNumber dq '8'
-	tryNumber db '4',10,13,
+	generatedNumber db '89', 10, 0
 	greaterText db 'The number you entered is greater than the program generated number.',10,13,
 	lenGreaterText equ $ -greaterText
 	lowerText db 'The number you entered is lower than the program generated number.',10,13,
@@ -27,13 +26,21 @@ section .data
 section .bss
 	enterNumber resb 20
 	playInput resb 5
-	linebreak resb 1
+	;linebreak resb 1
 	checker resb 1
+	tryNumber resb 1
 
 section .text
 	global _start
 
 _start:
+	call t_to_num
+	jmp _playThis
+
+_playThis:
+	;mov rcx, 4
+	;sub rcx, 0
+	;mov [tryNumber], rcx
 	mov rcx, 0
 	mov [checker], rcx
 
@@ -67,6 +74,8 @@ _inputText:
 	cmp rcx, 3
 	jg _outofchances
 
+	
+
 	mov rax, sys_write
 	mov rdi, stdout
 	mov rsi, enterNumberText
@@ -80,14 +89,19 @@ _inputText:
 	syscall
 	
 	call text_to_num
+	
 
 	mov rax, [enterNumber]
 	;sub rax, '0'
 	mov rcx, [generatedNumber]
-	sub rcx, '0'
+	;sub rcx, '0'
 	cmp rax, rcx
 	je _jumpRight
 
+	;mov rcx, [tryNumber]
+	;dec rcx
+	;mov [tryNumber], rcx
+	
 	jmp _jumpWrong
 
 	ret
@@ -107,6 +121,23 @@ text_to_num:
 		jmp l
 		end:
 			mov [enterNumber], rax
+	ret
+
+t_to_num:
+	mov rbx, generatedNumber
+	mov rax, 0
+	loop:
+		movzx rcx, byte [rbx]
+		cmp rcx, 0xa
+		je end1
+		imul rax, 0xa
+		mov rdx, rcx
+		sub rcx, 0x30
+		inc rbx
+		add rax, rcx
+		jmp loop
+		end1:
+			mov [generatedNumber], rax
 	ret
 
 _exit:
@@ -133,7 +164,7 @@ _jumpWrong:
 	mov rax, [enterNumber]
 	;sub rax, '0'
 	mov rcx, [generatedNumber]
-	sub rcx, '0'
+	;sub rcx, '0'
 	cmp rax, rcx
 	jl _lowerInput
 
@@ -178,7 +209,7 @@ _playAgain:
 	mov ah, [rcx]
         ;cmp rax, rcx
         cmp al, ah
-        je _start
+        je _playThis
 	
 	jmp _exit
 
